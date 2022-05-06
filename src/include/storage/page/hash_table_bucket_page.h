@@ -134,6 +134,12 @@ class HashTableBucketPage {
   bool IsEmpty();
 
   /**
+  * @return the specified bit of occupied
+  *
+  */
+  int GetOccupiedBit(size_t bucket_idx);
+  int GetReadableBit(size_t bucket_idx);
+  /**
    * Prints the bucket's occupancy information
    */
   void PrintBucket();
