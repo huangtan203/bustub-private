@@ -17,7 +17,7 @@
 #include "storage/disk/disk_manager.h"
 #include "storage/page/page.h"
 #include <vector>
-#include "buffer/buffer_pool_manager_instance.h"
+#include "buffer_pool_manager_instance.h"
 namespace bustub {
 
 class ParallelBufferPoolManager : public BufferPoolManager {
@@ -88,10 +88,10 @@ class ParallelBufferPoolManager : public BufferPoolManager {
    */
   void FlushAllPgsImp() override;
   private:
-    std::vector<BufferPoolManagerInstance*>bpms;
-    size_t nums_instance;
-    size_t next_index;
+    std::vector<BufferPoolManager*>bpms_;
+    size_t nums_instance_;
+    size_t next_index_;
     std::mutex latch_;
-    size_t pool_size;
+    size_t pool_size_;
 };
 }  // namespace bustub

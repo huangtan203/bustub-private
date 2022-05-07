@@ -15,45 +15,54 @@
 namespace bustub {
 
 LRUReplacer::LRUReplacer(size_t num_pages) {
-    capacity=num_pages;
+    capacity_=num_pages;
 }
 
 LRUReplacer::~LRUReplacer() = default;
 
 bool LRUReplacer::Victim(frame_id_t *frame_id) { 
-    mtx.lock();
-    if(replace_list.size()==0) {
-        mtx.unlock();
+    latch_.lock();
+    if(replace_list_.empty()) {
+        frame_id=nullptr;
+        latch_.unlock();     
         return false;
     }
-    *frame_id=replace_list.back();
-    replace_list.pop_back();
-    exist_rep.erase(*frame_id);
-    mtx.unlock();
+    *frame_id=replace_list_.back();
+    replace_list_.pop_back();
+    exist_rep_.erase(*frame_id);
+    latch_.unlock();
     return true; }
 
 void LRUReplacer::Pin(frame_id_t frame_id) {
-    if(!exist_rep.count(frame_id)) return;
-    mtx.lock();
-    replace_list.remove(frame_id);
-    exist_rep.erase(frame_id);
-    mtx.unlock();
+    latch_.lock();
+    if(exist_rep_.count(frame_id)==0U){
+        latch_.unlock();
+        return;
+    }  
+    replace_list_.erase(exist_rep_[frame_id]);
+    exist_rep_.erase(frame_id);
+    latch_.unlock();
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-    if(exist_rep.count(frame_id)) return ;
-    mtx.lock();
-    if(replace_list.size()==capacity){
-        frame_id_t back=replace_list.back();
-        replace_list.pop_back();
-        exist_rep.erase(back);
+    latch_.lock();
+    if(exist_rep_.count(frame_id)!=0U) {
+        latch_.unlock();
+        return ;
     }
-    replace_list.push_front(frame_id);
-    exist_rep[frame_id]=1;
-    mtx.unlock();
+    if(replace_list_.size()==capacity_){
+        frame_id_t *victim=nullptr;
+        if(!Victim(victim)){
+            latch_.unlock();
+            return;
+        }
+    }
+    replace_list_.push_front(frame_id);
+    exist_rep_[frame_id]=++replace_list_.begin();
+    latch_.unlock();
 }
 
 size_t LRUReplacer::Size() {
-    return (size_t)replace_list.size();
+    return static_cast<size_t>(replace_list_.size());
 }
 }  // namespace bustub

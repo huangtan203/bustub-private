@@ -28,6 +28,8 @@ namespace bustub {
  * BufferPoolManager reads disk pages to and from its internal buffer pool.
  */
 class BufferPoolManagerInstance : public BufferPoolManager {
+  friend class ParallelBufferPoolManager;
+
  public:
   /**
    * Creates a new BufferPoolManagerInstance.
@@ -57,7 +59,7 @@ class BufferPoolManagerInstance : public BufferPoolManager {
 
   /** @return pointer to all the pages in the buffer pool */
   Page *GetPages() { return pages_; }
-
+  
  protected:
   /**
    * Fetch the requested page from the buffer pool.
