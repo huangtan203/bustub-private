@@ -69,9 +69,9 @@ Page *ParallelBufferPoolManager::NewPgImp(page_id_t *page_id) {
   // is called
   latch_.lock();
   for(size_t i=0;i<nums_instance_;i++){
-    Page*page=(this->bpms_[(i+next_index_)%nums_instance_])->NewPage(page_id);
+    Page*page=(dynamic_cast<BufferPoolManagerInstance *>(bpms_[(i+next_index_)%nums_instance_]))->NewPgImp(page_id);
     if(page!=nullptr){
-      next_index_=(next_index_+1)%nums_instance_;
+      next_index_=(next_index_+1+i)%nums_instance_;
       latch_.unlock();
       return page;
     }

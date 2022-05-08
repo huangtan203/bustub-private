@@ -58,7 +58,7 @@ void LRUReplacer::Unpin(frame_id_t frame_id) {
         }
     }
     replace_list_.push_front(frame_id);
-    exist_rep_[frame_id]=++replace_list_.begin();
+    exist_rep_[frame_id]=replace_list_.begin();
     latch_.unlock();
 }
 
