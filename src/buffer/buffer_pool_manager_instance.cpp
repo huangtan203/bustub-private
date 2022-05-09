@@ -55,12 +55,12 @@ bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
  }
   frame_id_t frame_id=page_table_[page_id];
   Page*page=&pages_[frame_id];
-  // if(page->pin_count_){
-  //   latch_.unlock();
+  if(page->pin_count_){
+    latch_.unlock();
 
-  //   return false;
+    return true;
 
-  // }
+  }
   if(page->is_dirty_){
     disk_manager_->WritePage(page_id,page->data_);
     page->is_dirty_=false;
