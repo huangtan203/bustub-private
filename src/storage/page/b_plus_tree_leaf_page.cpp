@@ -27,23 +27,42 @@ namespace bustub {
  * next page id and set max size
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id, int max_size) {}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id, int max_size) {
+  this->page_id_=page_id;
+  this->parent_page_id_=parent_id;
+  this->max_size_=max_size;
+  this->page_type_|=LEAF_PAGE;
+  this->size_=0;
+  this->next_page_id_=INVALID_PAGE_ID;
+}
 
 /**
  * Helper methods to set/get next page id
  */
 INDEX_TEMPLATE_ARGUMENTS
-page_id_t B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const { return INVALID_PAGE_ID; }
+page_id_t B_PLUS_TREE_LEAF_PAGE_TYPE::GetNextPageId() const { return this->next_page_id_; }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::SetNextPageId(page_id_t next_page_id) {
+  this->next_page_id_=next_page_id;
+}
 
 /**
  * Helper method to find the first index i so that array[i].first >= key
  * NOTE: This method is only used when generating index iterator
  */
 INDEX_TEMPLATE_ARGUMENTS
-int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator &comparator) const { return 0; }
+int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator &comparator) const { 
+  int l=0,r=GetSize();
+  while(l<r){
+    int mid=(l+r)>>1;
+    if(comparator(this->array_[mid].first,key)<0){
+      l=mid+1;
+    }else{
+      r=mid;
+    }
+  }
+  return l; }
 
 /*
  * Helper method to find and return the key associated with input "index"(a.k.a
@@ -53,7 +72,7 @@ INDEX_TEMPLATE_ARGUMENTS
 KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const {
   // replace with your own code
   KeyType key{};
-  return key;
+  return this->array_[index].first;
 }
 
 /*
@@ -63,7 +82,7 @@ KeyType B_PLUS_TREE_LEAF_PAGE_TYPE::KeyAt(int index) const {
 INDEX_TEMPLATE_ARGUMENTS
 const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) {
   // replace with your own code
-  return array_[0];
+  return array_[index];
 }
 
 /*****************************************************************************
@@ -75,7 +94,13 @@ const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(int index) {
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &value, const KeyComparator &comparator) {
-  return 0;
+  int index=KeyIndex(key,comparator);
+  for(int i=GetSize()-2;i>=index;i--){
+    this->array_[i+1]=this->array_[i];
+  }
+  this->array_[index]=MappingType(key,value);
+  IncreaseSize(1);
+  return GetSize();
 }
 
 /*****************************************************************************
@@ -85,7 +110,17 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType &valu
  * Remove half of key & value pairs from this page to "recipient" page
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(BPlusTreeLeafPage *recipient) {}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveHalfTo(BPlusTreeLeafPage *recipient) {
+  int min_size=GetMinSize();
+  int remove_size=GetSize()-min_size;
+  for(int i=min_size;i<GetSize();i++){
+    recipient->array_[i-min_size]=this->array_[i];
+  }
+  this->SetSize(min_size);
+  recipient->SetSize(remove_size);
+  recipient->SetNextPageId(this->GetNextPageId());
+  this->SetNextPageId(recipient->GetPageId());
+}
 
 /*
  * Copy starting from items, and copy {size} number of elements into me.
@@ -103,6 +138,11 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {}
  */
 INDEX_TEMPLATE_ARGUMENTS
 bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, const KeyComparator &comparator) const {
+  int index=this->KeyIndex(key,comparator);
+  if(comparator(KeyAt(index),key)==0){
+    *value=this->array_[index].second;
+    return true;
+  }
   return false;
 }
 
@@ -126,7 +166,13 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(const KeyType &key, const 
  * to update the next_page id in the sibling page
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient) {}
+void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveAllTo(BPlusTreeLeafPage *recipient) {
+  for(int i=0;i<GetSize();i++){
+    recipient->array_[i]=this->array_[i];
+  }
+  recipient->SetSize(this->size_);
+  recipient->next_page_id_=this->next_page_id_;
+}
 
 /*****************************************************************************
  * REDISTRIBUTE

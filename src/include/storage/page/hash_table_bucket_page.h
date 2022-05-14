@@ -93,6 +93,8 @@ class HashTableBucketPage {
    * @return true if the index is occupied, false otherwise
    */
   bool IsOccupied(uint32_t bucket_idx) const;
+  void SetUnReadable(uint32_t bucket_idx);
+  void SetUnOccupied(uint32_t bucket_idx);
 
   /**
    * SetOccupied - Updates the bitmap to indicate that the entry at
@@ -139,6 +141,9 @@ class HashTableBucketPage {
   */
   int GetOccupiedBit(size_t bucket_idx);
   int GetReadableBit(size_t bucket_idx);
+  void InsertAt(size_t bucket_idx,KeyType key, ValueType value);
+  bool IsExist(KeyType key, ValueType value, KeyComparator cmp);
+  void PrintBucketBit();
   /**
    * Prints the bucket's occupancy information
    */

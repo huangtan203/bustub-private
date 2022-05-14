@@ -25,7 +25,14 @@ namespace bustub {
  * max page size
  */
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id, int max_size) {}
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id, int max_size) {
+  this->page_id_=page_id;
+  this->parent_page_id_=parent_id;
+  this->max_size_=max_size;
+  this->page_type_=INTERNAL_PAGE;
+  this->size_=1;
+  this->next_page_id_=INVALID_PAGE_ID;
+}
 /*
  * Helper method to get/set the key associated with input "index"(a.k.a
  * array offset)
@@ -34,25 +41,34 @@ INDEX_TEMPLATE_ARGUMENTS
 KeyType B_PLUS_TREE_INTERNAL_PAGE_TYPE::KeyAt(int index) const {
   // replace with your own code
   KeyType key{};
-  return key;
+  return this->array_[index].first;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {}
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {
+  this->array_[index].first=key
+}
 
 /*
  * Helper method to find and return array index(or offset), so that its value
  * equals to input "value"
  */
 INDEX_TEMPLATE_ARGUMENTS
-int B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueIndex(const ValueType &value) const { return 0; }
+int B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueIndex(const ValueType &value) const { 
+  for(int i=0;i<GetSize();i++){
+    if(this->array_[i].second==value){
+      return i;
+    }
+  }
+  return -1;
+ }
 
 /*
  * Helper method to get the value associated with input "index"(a.k.a array
  * offset)
  */
 INDEX_TEMPLATE_ARGUMENTS
-ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const { return 0; }
+ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const { return this->array_[index].second; }
 
 /*****************************************************************************
  * LOOKUP
@@ -64,7 +80,17 @@ ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const { return 0; }
  */
 INDEX_TEMPLATE_ARGUMENTS
 ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyComparator &comparator) const {
-  return INVALID_PAGE_ID;
+  int l=1,r=GetSize();
+  //应该找到最后一个相等的
+  while(l<r){
+    int mid=(l+r+1)>>1;
+    if(comparator(this->array_[mid].first,key)<=0){
+      l=mid;
+    }else{
+      r=mid-1;
+    }
+  }
+  return this->array_[l].second;
 }
 
 /*****************************************************************************
@@ -86,8 +112,14 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value,
  */
 INDEX_TEMPLATE_ARGUMENTS
 int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, const KeyType &new_key,
-                                                    const ValueType &new_value) {
-  return 0;
+  const ValueType &new_value) {
+  int index=ValueIndex(old_value);
+  for(int i=this->GetSize()-2;i>index;i--){
+    this->array_[i+1]=this->array_[i];
+  }
+  this->array_[++index]=MappingType(new_key,new_value);
+  this->IncreaseSize(1);
+  return this->GetSize();
 }
 
 /*****************************************************************************
@@ -98,7 +130,15 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_value, 
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveHalfTo(BPlusTreeInternalPage *recipient,
-                                                BufferPoolManager *buffer_pool_manager) {}
+   BufferPoolManager *buffer_pool_manager) {
+     int index=this->GetMinSize();
+     for(int i=index;i<this->GetSize();i++){
+       recipient->array_[recipient->size_++]=this->array_[i];
+     }
+     this->SetSize(index);
+     recipient->array_[0].second=this->array_[index-1].second;
+
+  }
 
 /* Copy entries into me, starting from {items} and copy {size} entries.
  * Since it is an internal page, for all entries (pages) moved, their parents page now changes to me.

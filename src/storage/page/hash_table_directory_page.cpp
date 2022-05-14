@@ -37,7 +37,9 @@ void HashTableDirectoryPage::IncrGlobalDepth() {
   }
   global_depth_++;
 }
-
+uint32_t HashTableDirectoryPage::GetSplitImageIndex(uint32_t bucket_idx){
+  return bucket_idx^(1<<local_depths_[bucket_idx]);
+}
 void HashTableDirectoryPage::DecrGlobalDepth() { global_depth_--; }
 
 page_id_t HashTableDirectoryPage::GetBucketPageId(uint32_t bucket_idx) { 
@@ -53,7 +55,14 @@ uint32_t HashTableDirectoryPage::Size() {
   return 1<<global_depth_;
  }
 
-bool HashTableDirectoryPage::CanShrink() { return false; }
+bool HashTableDirectoryPage::CanShrink() { 
+  for(int i=0;i<static_cast<int>(Size());i++){
+    if(GetGlobalDepth()>=GetLocalDepth(i)){
+      return false;
+    }
+  }
+  return true;
+ }
 
 uint32_t HashTableDirectoryPage::GetLocalDepth(uint32_t bucket_idx){
   return local_depths_[bucket_idx];
@@ -66,15 +75,19 @@ void HashTableDirectoryPage::SetLocalDepth(uint32_t bucket_idx, uint8_t local_de
 }
 
 void HashTableDirectoryPage::IncrLocalDepth(uint32_t bucket_idx) {
-
+  local_depths_[bucket_idx]++;
 }
 
 void HashTableDirectoryPage::DecrLocalDepth(uint32_t bucket_idx) {
-
+  if(local_depths_[bucket_idx]<=0){
+    return ;
+  }
+  local_depths_[bucket_idx]--;
 }
 
 uint32_t HashTableDirectoryPage::GetLocalHighBit(uint32_t bucket_idx) { 
-  return 0; }
+  return bucket_idx&~((1<<local_depths_[bucket_idx])-1);
+ }
 
 /**
  * VerifyIntegrity - Use this for debugging but **DO NOT CHANGE**

@@ -195,10 +195,10 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
     return false;
   }
   // 3.   Otherwise, P can be deleted. Remove P from the page table, reset its metadata and return it to the free list.
-//   if(page_->is_dirty_){
-//     FlushPgImp(page_id);
-//   }
-  // DeallocatePage(page_id);
+  //if(page->is_dirty_){
+    //disk_manager_->WritePage(page->GetPageId(),page->GetData());
+    //这里没必要,因为page_id被删除,意味着磁盘中的数据也将被删除,刷新与否已经不重要
+  //}
   this->DeallocatePage(page_id);
   page_table_.erase(page_id);
   free_list_.push_back(frame_id);
