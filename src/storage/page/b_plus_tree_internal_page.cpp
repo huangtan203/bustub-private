@@ -80,7 +80,7 @@ ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const { return this
  */
 INDEX_TEMPLATE_ARGUMENTS
 ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyComparator &comparator) const {
-  int l=1,r=GetSize();
+  int l=1,r=GetSize()-1;
   //应该找到最后一个相等的
   while(l<r){
     int mid=(l+r+1)>>1;
@@ -104,7 +104,11 @@ ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyCo
  */
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::PopulateNewRoot(const ValueType &old_value, const KeyType &new_key,
-                                                     const ValueType &new_value) {}
+   const ValueType &new_value) {
+     this->array_[0].second=old_value;
+     this->array_[1]=MappingType(new_key,new_value);
+     SetSize(2);
+  }
 /*
  * Insert new_key & new_value pair right after the pair with its value ==
  * old_value
